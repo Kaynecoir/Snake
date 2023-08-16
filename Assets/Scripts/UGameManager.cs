@@ -11,9 +11,13 @@ public class UGameManager : MonoBehaviour
     public float speed = 1.0f;
     public int height, width;
     public bool[,] area;
+    public bool endGame;
     void Start()
     {
         snake.EatFood += () => { speed *= 0.95f; };
+        snake.EatTail += () => { Debug.Log("StopAllCoroutines"); StopAllCoroutines(); };
+        snake.EatTail += () => { Debug.Log("StopCoroutine"); StopCoroutine(CreatFood()); };
+        snake.EatTail += () => { endGame = true; };
         area = new bool[height, width];
         for(int i = 0; i < height; i++)
 		{
@@ -24,9 +28,25 @@ public class UGameManager : MonoBehaviour
 		}
         StartCoroutine(CreatFood());
     }
+	private void OnDrawGizmos()
+	{
+        
+	}
+	private void OnDrawGizmosSelected()
+	{
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                Gizmos.color = Color.white;
+                if (area != null) Gizmos.color = area[i, j] ? Color.white : Color.red;
+                Gizmos.DrawCube(new Vector3(-width / 4 + 0.5f * j - 0.5f, -height / 4 + 0.5f * i - 0.5f), Vector3.one * 0.4f);
+            }
+        }
+    }
 
-    // Update is called once per frame
-    void Update()
+	// Update is called once per frame
+	void Update()
     {
         if(snake.transform.position.y > height / 2 * 0.5)
 		{
@@ -46,15 +66,18 @@ public class UGameManager : MonoBehaviour
         }
     }
 
+    
+
     IEnumerator CreatFood()
 	{
-        while(true)
+        while(!endGame)
 		{
-            int x = (int)Random.Range(-width / 4, width / 4), y = (int)Random.Range(-height / 4, height / 4);
-            if(area[y + height / 4, x + width / 4])
+            int x = (int)Random.Range(-width / 2, width / 2), y = (int)Random.Range(-height / 2, height / 2);
+            Debug.Log(x + " " + y);
+            if(area[y + height / 2, x + width / 2])
 			{
-                Instantiate(FoodPrefab, new Vector3(x, y), Quaternion.identity);
-                area[y + height / 4, x + width / 4] = false;
+                Instantiate(FoodPrefab, new Vector3(x, y) * 0.5f, Quaternion.identity);
+                area[y + height / 2, x + width / 2] = false;
 			}
             yield return new WaitForSeconds(5);
 		}

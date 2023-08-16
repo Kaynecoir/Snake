@@ -17,6 +17,11 @@ public class SnakeHead : SnakeNode
     void Start()
     {
         EatTail += () => { Debug.Log("Eat tail"); };
+        EatTail += () => { 
+            StopCoroutine(Move());
+            //tail.Clear();
+            
+        };
         EatFood += () => { Debug.Log("Eat food"); };
         SnakeDirection = "Up";
         StartCoroutine(Move());
@@ -56,13 +61,7 @@ public class SnakeHead : SnakeNode
         if (collision.tag == "Food")
         {
             EatFood?.Invoke();
-            int x = (int)(transform.position.x / 0.5f + gameManager.width / 2);
-            int y = (int)(transform.position.y / 0.5f + gameManager.height / 2);
-
-            if (x >= 0 && x < gameManager.width && y >= 0 && y < gameManager.height)
-            {
-                gameManager.area[y, x] = false;
-            }
+            
             Destroy(collision.gameObject);
             AddTail();
         }
@@ -79,10 +78,12 @@ public class SnakeHead : SnakeNode
 
     IEnumerator Move()
 	{
-        while(true)
+        while(!gameManager.endGame)
 		{
             yield return new WaitForSeconds(gameManager.speed);
 
+            Vector3 t = tail[0].transform.position;
+            
             SnakeNode newTail = null;
             if (notActiveTail.Count > 0 && notActiveTail[0].transform.position == tail[0].transform.position)
 			{
@@ -90,13 +91,6 @@ public class SnakeHead : SnakeNode
                 notActiveTail.Remove(newTail);
                 newTail.gameObject.SetActive(true);
 			}
-            int x, y;
-            x = (int)(tail[0].transform.position.x / 0.5f + gameManager.width / 2); 
-            y = (int)(tail[0].transform.position.y / 0.5f + gameManager.height / 2);
-            if (x >= 0 && x < gameManager.width && y >= 0 && y < gameManager.height)
-            {
-                gameManager.area[y, x] = true;
-            }
             foreach(SnakeNode n in tail)
 			{
                 n.transform.position = n.prev.transform.position;
@@ -108,8 +102,21 @@ public class SnakeHead : SnakeNode
                 }
 			}
 
-            if (newTail != null) tail.Insert(0, newTail);
+            if (newTail != null)
+            {
+                tail.Insert(0, newTail);
+                t = newTail.transform.position;
+            }
+
             transform.position += direction * step;
+
+            int x, y;
+            x = (int)(t.x / 0.5f + gameManager.width / 2);
+            y = (int)(t.y / 0.5f + gameManager.height / 2);
+            if (x >= 0 && x < gameManager.width && y >= 0 && y < gameManager.height)
+            {
+                gameManager.area[y, x] = true;
+            }
             x = (int)(transform.position.x / 0.5f + gameManager.width / 2);
             y = (int)(transform.position.y / 0.5f + gameManager.height / 2);
             if (x >= 0 && x < gameManager.width && y >= 0 && y < gameManager.height)
